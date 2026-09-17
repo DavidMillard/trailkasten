@@ -1,0 +1,46 @@
+cff-version: 1.2.0
+title: Trailkasten
+message: >-
+  If you use this vault or its tooling, please cite the paper that
+  describes the system (given under preferred-citation).
+type: software
+abstract: >-
+  A Zettelkasten structured to be worked on with an AI assistant: an
+  Obsidian vault plus a vocabulary of commands and skills for Claude
+  Code. Released as the foundational structure described in
+  "Permanently Under Construction" (ACM Hypertext 2026).
+authors:
+  - family-names: Millard
+    given-names: David E.
+    orcid: 'https://orcid.org/0000-0002-7512-2710'
+    affiliation: University of Southampton
+repository-code: 'https://github.com/DavidMillard/trailkasten'
+license: MIT
+keywords:
+  - zettelkasten
+  - hypertext
+  - personal knowledge management
+  - human-AI collaboration
+  - obsidian
+preferred-citation:
+  type: conference-paper
+  title: >-
+    Permanently Under Construction: Hypertextual Friction in an
+    AI-Augmented Zettelkasten
+  authors:
+    - family-names: Millard
+      given-names: David E.
+      orcid: 'https://orcid.org/0000-0002-7512-2710'
+      affiliation: University of Southampton
+  collection-title: >-
+    Proceedings of the 37th ACM Conference on Hypertext and Social Media
+  conference:
+    name: "HT '26: 37th ACM Conference on Hypertext"
+  publisher:
+    name: Association for Computing Machinery
+    address: New York, NY, USA
+  year: 2026
+  month: 9
+  start: 383
+  end: 393
+  doi: 10.1145/3800935.3830837
