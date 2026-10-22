@@ -20,7 +20,7 @@ Evaluate a set of papers against the vault's knowledge needs and recommend which
 Then either:
 - Paste a list of papers (titles, abstracts, URLs from any source)
 - Provide a file path argument — the command reads the file and parses its contents as the paper list
-- Or provide nothing — the command pulls from Zotero's `_to-evaluate` queue
+- Or provide nothing — the command pulls from the Zotero collection `Workflow/To Evaluate`
 
 ## Skills Required
 
@@ -50,12 +50,12 @@ User provides a path to a `.txt` or `.md` file containing a list of papers. The 
 
 ### Mode 3: Zotero Queue
 
-No list provided. Pull papers from Zotero that have been tagged `_to-evaluate`.
+No list provided. Pull papers from the Zotero collection `Workflow/To Evaluate` — the user drops papers into it in Zotero. (If the user keeps their queue under another name, use that; ask rather than guess.)
 
 **Trigger**: User invokes command without pasting papers or a file path, or provides only a number.
 
 **Parameters**:
-- No argument → pull 10 papers from `_to-evaluate` queue
+- No argument → pull 10 papers from the `To Evaluate` queue
 - Number argument → pull that many papers
 
 ## Workflow
@@ -80,17 +80,17 @@ No list provided. Pull papers from Zotero that have been tagged `_to-evaluate`.
 3. Proceed to Phase 1.5 to classify each paper's abstract quality
 
 **If no list provided (Mode 3 — Zotero queue)**:
-1. Search for papers with `_to-evaluate` tag:
+1. Find the queue's collection key with `mcp__zotero__zotero_search_collections(query: "To Evaluate")`, then read it:
    ```
-   mcp__zotero__zotero_search_items(query: "", tag: "_to-evaluate", limit: batch-size)
+   mcp__zotero__zotero_get_collection_items(collection_key: "<key>", detail: "full", limit: batch-size)
    ```
 2. If no papers found, inform user:
    ```
-   No papers in the evaluation queue. Add `_to-evaluate` tag in Zotero to queue papers,
+   No papers in the evaluation queue. Drop papers into `Workflow/To Evaluate` in Zotero to queue them,
    or paste a list of papers directly.
    ```
-3. Fetch metadata for each paper using `zotero_item_metadata`
-4. For papers without abstracts: fetch using `zotero_item_fulltext` via Haiku subagent (same pattern as process-zotero-tags)
+3. Fetch metadata for any paper the listing left incomplete using `mcp__zotero__zotero_get_item_metadata`
+4. For papers without abstracts: fetch using `mcp__zotero__zotero_get_item_fulltext` via a Haiku subagent
 
 ### Phase 1.5: Detect Snippet-Only Papers (Modes 1 and 2 only)
 
@@ -249,7 +249,6 @@ Then apply the full evaluation criteria from the `research-paper-evaluation` ski
 **Zotero library status**:
 
 - If a paper is already in the Zotero library, note this: `Already in Zotero library`
-- If a paper already has `_tagged` marker, note: `Already in Zotero, tagged`
 - This information is relevant but does not determine the recommendation — a paper can be in Zotero for library purposes without being worth bringing into the vault.
 
 ### Phase 4: Present Detailed Evaluation
@@ -322,34 +321,33 @@ If no papers are recommended as Add:
 None from this batch. [N] papers flagged as Consider if you'd like to review borderline cases.
 ```
 
-### Phase 7: Tracking Tags (Zotero Mode Only)
+### Phase 7: Workflow Collections (Zotero Mode Only)
 
-**Only applies when papers came from the Zotero `_to-evaluate` queue.**
+**Only applies when papers came from the `Workflow/To Evaluate` queue.**
 
-After presenting the evaluation report, ask:
+After presenting the report, ask:
 
 ```
-Shall I update the evaluation tracking tags in Zotero?
+Shall I move the evaluated papers out of the evaluation queue in Zotero?
 
 This will:
-- Add `_evaluated` (permanent) and `_evaluated-YYYY-MM-DD` (verification) to all evaluated papers
-- Remove `_to-evaluate` from all evaluated papers
+- Remove them from `Workflow/To Evaluate`
+- File them in `Workflow/Evaluated/YYYY/<Month>/YYYY-MM-DD` (a permanent dated record)
 
-This only updates tracking tags — it does not add, remove, or modify any other tags or metadata.
+This only changes workflow collections — it does not add, remove, or modify tags, metadata, or any other collection.
 ```
 
-If approved, for each evaluated paper:
-```bash
-zotero-tag-by-key <item-key> _evaluated _evaluated-YYYY-MM-DD
-zotero-remove-tags <item-key> _to-evaluate
-```
+If approved:
+1. Ensure the dated folder exists: `mcp__zotero__zotero_search_collections(query: "YYYY-MM-DD")`, and if absent create the missing levels top-down with `mcp__zotero__zotero_create_collection(name: ..., parent_collection: "Workflow/Evaluated/YYYY")` etc. (check for `Evaluated`, the year and the month first).
+2. Move all evaluated papers in one call:
+   ```
+   mcp__zotero__zotero_set_item_collections(item_keys: [...],
+       add_to: ["Workflow/Evaluated/YYYY/<Month>/YYYY-MM-DD"], remove_from: ["Workflow/To Evaluate"])
+   ```
 
-Then remind:
-```
-Verify in Zotero using `_evaluated-YYYY-MM-DD` tag, then remove it (keep `_evaluated` permanently).
-```
+Queue state lives in collections, never in tags: tags are for what a paper is about, and the user can see and rearrange collections directly in Zotero.
 
-If user declines, do not apply tracking tags.
+If user declines, leave the papers in the queue.
 
 ## Error Handling
 
@@ -357,7 +355,7 @@ If user declines, do not apply tracking tags.
 
 **No abstract available (Zotero mode)**: Attempt to retrieve via Haiku subagent from fulltext. If no fulltext either, evaluate from title and existing tags only if there is high confidence; otherwise recommend Skip with note.
 
-**Empty Zotero queue**: Inform user and suggest adding `_to-evaluate` tags or pasting a list directly.
+**Empty Zotero queue**: Inform user and suggest dropping papers into `Workflow/To Evaluate` or pasting a list directly.
 
 **Very large list (20+ papers)**: Process all papers but note at the start: "Evaluating N papers — this will be a substantial report."
 

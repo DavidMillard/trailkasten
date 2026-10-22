@@ -30,9 +30,17 @@ Create a comprehensive Literature Note from an academic paper in the user's Zote
 
 ### Step 1: Search Zotero
 
-Use `mcp__zotero__search` with the citation key (from $ARGUMENTS).
+The argument (from $ARGUMENTS) is a Better BibTeX citation key; the Zotero MCP tools take an 8-character item key. Resolve one to the other:
 
-If not found, try title/author keywords as fallback.
+1. `mcp__zotero__zotero_search_by_citation_key(citekey: "<key>")`. Against the Zotero web API this only finds keys stored in the item's Extra field, so a miss is normal.
+2. On a miss, search by the author and year embedded in the key — e.g. `bushAsWeMayThink1945` → `mcp__zotero__zotero_search_items(query: "Bush 1945")`. Add a title word if there are many hits.
+3. **Confirm the candidate** by asking Better BibTeX for its key (Zotero desktop must be running with BBT installed):
+   ```bash
+   curl -s -X POST "http://127.0.0.1:23119/better-bibtex/json-rpc" -H "Content-Type: application/json" \
+     -d '{"jsonrpc":"2.0","method":"item.citationkey","params":[["ITEMKEY1","ITEMKEY2"]],"id":1}'
+   ```
+   The item whose returned key equals the argument is the one.
+4. If the argument is not a citation key, or nothing confirms, fall back to title/author keywords and ask the user to pick.
 
 ### Step 2: Fetch Metadata
 
@@ -73,7 +81,7 @@ ls ~/Zotero/storage/[ATTACHMENT_KEY]/*.pdf | head -1
 
 Give the subagent the PDF path and `Context: "[TITLE] by [AUTHORS] ([YEAR]), [VENUE]"`.
 
-If the item has no PDF, write the Zotero MCP `zotero_item_fulltext` output to a
+If the item has no PDF, write the Zotero MCP `zotero_get_item_fulltext` output to a
 temporary file and give the subagent that path instead.
 
 **If the summariser fails or the item has no full text:**
@@ -96,7 +104,7 @@ No full text was available. I have substantial prior knowledge of this work.
 
 ### Step 4: Find Related Papers
 
-Use `mcp__zotero__zotero_semantic_search` for papers related to main topics (limit 5).
+Use `mcp__zotero__zotero_search_by_tag` with the paper's own most specific tags (e.g. `tag: ["spatial-hypertext || link-type"]`, limit 5 — use `||`, never ` OR `, which silently returns nothing), excluding the paper itself. See `/find-papers` for the tag-query pattern.
 
 ### Step 5: Generate AI Analysis
 

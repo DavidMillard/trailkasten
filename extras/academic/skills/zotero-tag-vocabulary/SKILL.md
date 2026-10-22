@@ -112,25 +112,25 @@ When searching for papers related to a vault concept, use a three-level progress
 ### Level 1: Primary Query (Most Specific)
 Combine specific tags with category constraint:
 ```
-tag: "(specific-tag OR related-specific-tag) AND category-tag"
+tag: ["specific-tag || related-specific-tag", "category-tag"]
 limit: 10
 ```
 
 **Example** (for "intentional friction"):
 ```
-tag: "(intentional-friction OR friction) AND HCI"
+tag: ["intentional-friction || friction", "HCI"]
 ```
 
 ### Level 2: Broadened Query (If <3 Results)
 Remove category constraint, keep related specific tags:
 ```
-tag: "specific-tag OR related-tag-1 OR related-tag-2"
+tag: ["specific-tag || related-tag-1 || related-tag-2"]
 limit: 10
 ```
 
 **Example**:
 ```
-tag: "friction OR disfluency OR designed-friction OR intentional-friction"
+tag: ["friction || disfluency || designed-friction || intentional-friction"]
 ```
 
 ### Level 3: Category + Keyword (If Still <3 Results)
@@ -223,9 +223,9 @@ Input: [[Intentional Friction]]
 → Key terms: "intentional friction", "friction", "user experience"
 → Tag candidates: `intentional-friction`, `friction`, `disfluency`
 → Category: `HCI`, possibly `game-design`
-→ Primary query: "(intentional-friction OR friction) AND HCI"
-→ Broadened query: "friction OR disfluency OR intentional-friction"
-→ Category query: tag="HCI" query="friction"
+→ Primary query: ["intentional-friction || friction", "HCI"]
+→ Broadened query: ["friction || disfluency || intentional-friction"]
+→ Category query: tag=["HCI"] query="friction"
 ```
 
 ## Auto-Load Triggers

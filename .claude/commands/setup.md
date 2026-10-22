@@ -38,7 +38,11 @@ cat .obsidian/community-plugins.json 2>/dev/null || echo "no plugin config — i
 test -d .smart-env && echo "indexed" || echo "no .smart-env — Smart Connections has not indexed"
 
 # Zotero MCP, for the academic tier
-command -v zotero-mcp >/dev/null && echo "zotero-mcp found" || echo "zotero-mcp not installed"
+# Two different packages install an executable called zotero-mcp; only zotero-mcp-server
+# (version 0.15 or later) provides the tools the academic tier calls.
+zotero-mcp version 2>/dev/null | grep -Eq "v0\.(1[5-9]|[2-9][0-9])|v[1-9]" \
+  && echo "zotero-mcp-server found: $(zotero-mcp version)" \
+  || echo "zotero-mcp-server not installed (or the wrong zotero-mcp) — uv tool install zotero-mcp-server==0.15.1"
 
 # Existing config
 test -f .mcp.json && echo ".mcp.json exists" || echo "no .mcp.json yet"
@@ -54,7 +58,7 @@ costs. Be concrete about consequences rather than listing absences.
 | Smart Connections | No semantic search; related notes sharing no vocabulary get missed |
 | `.smart-env/` | The Smart Connections MCP server will refuse to start |
 | Supercharged Links | `#human`-tagged content is not visually distinct |
-| zotero-mcp | Academic tier unavailable |
+| zotero-mcp-server | Academic tier unavailable. A `zotero-mcp` older than 0.15 is probably the read-only `kujenga/zotero-mcp`, which lacks the tools these commands call |
 
 If Dataview or the Obsidian MCP plugin are missing, say so plainly and point at the README's
 install section. **Then carry on anyway** — a partially configured vault still works, and
@@ -172,13 +176,16 @@ Show the complete file and ask before writing.
     // Academic tier only. Ask for the library ID and API key, and say plainly that
     // .mcp.json is gitignored so the key stays local.
     "zotero": {
-      "command": "<path to zotero-mcp>",
-      "args": [],
+      "command": "<path to zotero-mcp, from zotero-mcp-server>",
+      "args": ["serve"],
       "env": {
+        "ZOTERO_LOCAL": "false",
         "ZOTERO_LIBRARY_ID": "<id>",
         "ZOTERO_API_KEY": "<key>",
         "ZOTERO_LIBRARY_TYPE": "user",
-        "ZOTERO_EMBEDDING_MODEL": "default"
+        // The core tools only, and no attempt to edit Claude Desktop's config
+        "ZOTERO_MCP_TOOLSETS": "none",
+        "ZOTERO_NO_CLAUDE": "true"
       }
     }
   }

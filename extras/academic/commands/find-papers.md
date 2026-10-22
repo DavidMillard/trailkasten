@@ -94,28 +94,32 @@ Input: [[Intentional Friction]]
 → Related tags: `disfluency`, `designed-friction`
 → Categories: `HCI`, `game-design`
 → Query strategy:
-   - Primary: "(intentional-friction OR friction) AND HCI"
-   - Broadened: "friction OR disfluency OR designed-friction OR intentional-friction"
-   - Category: tag="HCI" query="friction"
+   - Primary: tag=["intentional-friction || friction", "HCI"]
+   - Broadened: tag=["friction || disfluency || designed-friction || intentional-friction"]
+   - Category: tag=["HCI"] query="friction"
 ```
 
 ### Step 3: Execute Progressive Zotero Queries
 
 **Three-level progressive strategy**:
 
+**Tag syntax** (`zotero_search_by_tag`): `tag` is a list of conditions that are **ANDed**; within one entry, ` || ` gives alternatives and a leading `-` excludes. So `(A OR B) AND C` is `tag: ["A || B", "C"]`.
+
+**⚠️ Use `||`, never ` OR `.** The tool's own description says ` OR `, but against the web API ` OR ` is passed through as a literal tag name and returns nothing — silently, so it looks like a research gap. (Verified against `zotero-mcp-server` 0.15.1: `["a OR b"]` → 0 results; `["a || b"]` → the expected matches.)
+
 #### Level 1: Primary Query (Most Specific)
 
 Execute most specific query first:
 ```
-mcp__zotero__zotero_search_items:
-  tag: "(specific-tag OR related-specific-tag) AND category-tag"
+mcp__zotero__zotero_search_by_tag:
+  tag: ["specific-tag || related-specific-tag", "category-tag"]
   limit: 10
 ```
 
 **Example**:
 ```
-mcp__zotero__zotero_search_items:
-  tag: "(intentional-friction OR friction) AND HCI"
+mcp__zotero__zotero_search_by_tag:
+  tag: ["intentional-friction || friction", "HCI"]
   limit: 10
 ```
 
@@ -123,15 +127,15 @@ mcp__zotero__zotero_search_items:
 
 If primary query returns fewer than 3 results, broaden:
 ```
-mcp__zotero__zotero_search_items:
-  tag: "specific-tag OR related-tag-1 OR related-tag-2"
+mcp__zotero__zotero_search_by_tag:
+  tag: ["specific-tag || related-tag-1 || related-tag-2"]
   limit: 10
 ```
 
 **Example**:
 ```
-mcp__zotero__zotero_search_items:
-  tag: "friction OR disfluency OR designed-friction OR intentional-friction"
+mcp__zotero__zotero_search_by_tag:
+  tag: ["friction || disfluency || designed-friction || intentional-friction"]
   limit: 10
 ```
 
@@ -140,7 +144,7 @@ mcp__zotero__zotero_search_items:
 If still fewer than 3 results, use category with keyword:
 ```
 mcp__zotero__zotero_search_items:
-  tag: "category-tag"
+  tag: ["category-tag"]
   query: "concept-keyword"
   qmode: "titleCreatorYear"
   limit: 10
@@ -149,7 +153,7 @@ mcp__zotero__zotero_search_items:
 **Example**:
 ```
 mcp__zotero__zotero_search_items:
-  tag: "HCI"
+  tag: ["HCI"]
   query: "friction"
   qmode: "titleCreatorYear"
   limit: 10
@@ -170,7 +174,7 @@ Score each paper based on tag specificity:
 
 **Fetch metadata for top results**:
 
-For each unique item key (deduplicated), use `mcp__zotero__zotero_item_metadata` to get:
+For each unique item key (deduplicated), use `mcp__zotero__zotero_get_item_metadata` to get:
 - Title
 - Authors
 - Year
