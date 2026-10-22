@@ -114,14 +114,21 @@ browser; `/setup` will tell you which are missing.
    Then open the folder as a vault in Obsidian.
 2. **Install the plugins** above and enable them. **Let Smart Connections finish its first
    index** — it creates `.smart-env/`, and the MCP server below will not start without it.
-3. **Install the Smart Connections MCP server** (optional, but do it before `/setup` if you
-   want semantic search):
-   ```bash
-   git clone https://github.com/msdanyg/smart-connections-mcp
-   cd smart-connections-mcp && npm install
-   ```
-   That is the whole install: the project ships its compiled output, so there is
-   nothing to build.
+3. **The Smart Connections MCP server** (optional) gives Claude semantic search over your
+   notes. There is nothing to install by hand: it runs from npm via `npx`
+   (`smart-connections-mcp`, Node 20+), and `/setup` writes the configuration.
+
+   > **Known incompatibility (as of October 2026).** Smart Connections 4.7 changed how it
+   > stores its index: the per-note files in `.smart-env/multi/` were replaced by a single
+   > `smart_sources/smart_sources.ajson` plus binary vector files. The MCP server (2.0.1)
+   > still reads only `multi/`. On a new vault it therefore refuses to start ("Missing
+   > .smart-env/multi"); on a vault that upgraded from an earlier plugin version it starts,
+   > but silently searches the last index written before the upgrade, so newer notes never
+   > appear. This is tracked upstream as
+   > [msdanyg/smart-connections-mcp#11](https://github.com/msdanyg/smart-connections-mcp/issues/11).
+   > Until it is fixed, leave the server out — everything else in this vault works without
+   > it, and the commands can fall back to keyword and link search. This note will go once
+   > upstream reads the new layout.
 4. **Open Claude Code** in the vault directory and run `/setup`. It checks what is present,
    writes your `.mcp.json`, asks who you are and what the vault is for, and offers to
    install the academic tier.
@@ -147,10 +154,11 @@ hand-edit later:
       // with this vault open. Check the port in the plugin's settings.
     },
     "smart-connections": {
-      "command": "node",
-      "args": ["/path/to/smart-connections-mcp/dist/index.js"],
+      "command": "npx",
+      "args": ["-y", "smart-connections-mcp"],
       "env": { "SMART_VAULT_PATH": "/path/to/this/vault" }
-      // Reads <vault>/.smart-env/ — will not start until Smart Connections has indexed.
+      // Reads <vault>/.smart-env/ — will not start until Smart Connections has indexed,
+      // and does not yet read the Smart Connections 4.7 layout (see the install notes).
     }
   }
 }

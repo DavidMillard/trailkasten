@@ -36,6 +36,9 @@ cat .obsidian/community-plugins.json 2>/dev/null || echo "no plugin config — i
 
 # Has Smart Connections built its index? The MCP server will not start without this.
 test -d .smart-env && echo "indexed" || echo "no .smart-env — Smart Connections has not indexed"
+# Which storage layout? The MCP server reads only multi/ (see the table below).
+test -d .smart-env/multi && echo "legacy multi/ present" || echo "no multi/"
+test -f .smart-env/smart_sources/smart_sources.ajson && echo "4.7 layout present" || echo "no 4.7 layout"
 
 # Zotero MCP, for the academic tier
 # Two different packages install an executable called zotero-mcp; only zotero-mcp-server
@@ -57,6 +60,8 @@ costs. Be concrete about consequences rather than listing absences.
 | Semantic Notes Vault MCP | No `mcp__obsidian__*` tools; searching falls back to Grep and Read |
 | Smart Connections | No semantic search; related notes sharing no vocabulary get missed |
 | `.smart-env/` | The Smart Connections MCP server will refuse to start |
+| `.smart-env/smart_sources/` without `.smart-env/multi/` | Smart Connections 4.7+ layout, which the MCP server (2.0.1) cannot read yet — it refuses to start ([upstream #11](https://github.com/msdanyg/smart-connections-mcp/issues/11)) |
+| both `.smart-env/smart_sources/` and `.smart-env/multi/` | Upgraded from an older plugin: the MCP server starts but searches the stale pre-upgrade index. Recommend leaving it out until #11 is fixed |
 | Supercharged Links | `#human`-tagged content is not visually distinct |
 | zotero-mcp-server | Academic tier unavailable. A `zotero-mcp` older than 0.15 is probably the read-only `kujenga/zotero-mcp`, which lacks the tools these commands call |
 
@@ -166,11 +171,11 @@ Show the complete file and ask before writing.
       "type": "http",
       "url": "http://localhost:3001/mcp"
     },
-    // Include only if the user has cloned smart-connections-mcp AND .smart-env exists.
-    // Ask for the path; do not guess it.
+    // Include only if .smart-env/multi exists and the user wants it after hearing the
+    // Smart Connections 4.7 caveat above (upstream #11). Runs from npm; Node 20+.
     "smart-connections": {
-      "command": "node",
-      "args": ["<absolute path>/dist/index.js"],
+      "command": "npx",
+      "args": ["-y", "smart-connections-mcp"],
       "env": { "SMART_VAULT_PATH": "<absolute path to this vault>" }
     },
     // Academic tier only. Ask for the library ID and API key, and say plainly that

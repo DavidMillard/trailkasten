@@ -167,10 +167,10 @@ Embedding-based semantic similarity — finds conceptually related notes regardl
 
 **`search_notes` usage rules** (free-text semantic search):
 - **Requires warm-up**: Like the Obsidian MCP, smart connections may return empty results on the first call(s) in a session. Always make one warm-up call (e.g., `get_stats`) before relying on search results. If results are empty, retry once before concluding nothing matches.
-- **Short queries only**: The small embedding model (`bge-micro-v2`, 384d) degrades sharply on multi-term queries. Use 2–3 focused terms, not kitchen-sink lists. Run multiple short queries rather than one long compound query.
-  - ✅ `"information seeking"` → returns results
-  - ❌ `"information seeking virtual reality immersion presence cognitive load"` → returns nothing
-- **Prefer `get_similar_notes` when you have a source note** — it's more reliable than `search_notes` because it compares embeddings directly rather than embedding a free-text query.
+- **Write the query as a phrase or question, not a keyword list.** The server (v2) embeds the query locally with the vault's own model, so a natural-language description of the idea works — e.g. `"whether delegating review erodes the judgement of the next generation of reviewers"`. A kitchen-sink list of unrelated terms still blurs the embedding; run several focused queries rather than one that mixes topics.
+- **Check `mode` in the response.** `"semantic"` is normal; `"keyword-fallback"` means the embedding model failed to load and results are literal matches only — treat as degraded and follow the Failure Protocol below.
+- **`scope`**: `"notes"` for whole-note matches; the default `"both"` also returns section (block) hits, which can fill the list with several sections of one note.
+- **Prefer `get_similar_notes` when you have a source note** — it compares stored embeddings directly, needs no model, and is the cheapest reliable call.
 
 **When to prefer over vault search**: When finding "what's conceptually related to this note?" — especially for notes with implicit connections not yet reflected in wiki-links.
 
